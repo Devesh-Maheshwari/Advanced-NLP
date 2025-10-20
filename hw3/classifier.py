@@ -15,7 +15,7 @@ from tqdm import tqdm
 
 TQDM_DISABLE=True
 # fix the random seed
-def seed_everything(seed=11711):
+def seed_everything(seed=222):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -37,13 +37,28 @@ class BertSentClassifier(torch.nn.Module):
             elif config.option == 'finetune':
                 param.requires_grad = True
 
+        
+
         # todo
-        raise NotImplementedError
+        ##AKS
+        self.classifier = torch.nn.Sequential(
+        torch.nn.Linear(config.hidden_size, config.hidden_size//2),
+        torch.nn.ReLU(),
+        torch.nn.Dropout(config.hidden_dropout_prob),
+        torch.nn.Linear(config.hidden_size//2, config.num_labels)
+        )
+        # raise NotImplementedError
 
     def forward(self, input_ids, attention_mask):
         # todo
         # the final bert contextualize embedding is the hidden state of [CLS] token (the first token)
-        raise NotImplementedError
+        ##AKS
+        output=self.bert(input_ids, attention_mask)
+        ptint(output.shape)
+        last_hidden_state = output[0]
+        cls_token = last_hidden_state[:, 0, :]
+        logits = self.classifier(cls_token)
+        return logits
 
 # create a custom Dataset Class to be used for the dataloader
 class BertDataset(Dataset):
