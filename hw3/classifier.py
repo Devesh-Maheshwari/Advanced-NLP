@@ -15,7 +15,7 @@ from tqdm import tqdm
 
 TQDM_DISABLE=True
 # fix the random seed
-def seed_everything(seed=222):
+def seed_everything(seed=11711):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -54,11 +54,12 @@ class BertSentClassifier(torch.nn.Module):
         # the final bert contextualize embedding is the hidden state of [CLS] token (the first token)
         ##AKS
         output=self.bert(input_ids, attention_mask)
-        ptint(output.shape)
-        last_hidden_state = output[0]
-        cls_token = last_hidden_state[:, 0, :]
+        # print(output.keys())
+        # print(output)
+        cls_token = output['pooler_output']
+        # cls_token = cls_token[:, 0,]
         logits = self.classifier(cls_token)
-        return logits
+        return F.log_softmax(logits, dim=1)
 
 # create a custom Dataset Class to be used for the dataloader
 class BertDataset(Dataset):
@@ -271,24 +272,24 @@ def test(args):
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--train", type=str, default="data/cfimdb-train.txt")
-    parser.add_argument("--dev", type=str, default="data/cfimdb-dev.txt")
-    parser.add_argument("--test", type=str, default="data/cfimdb-test.txt")
+    parser.add_argument("--train", type=str, default="data/sst-train.txt")
+    parser.add_argument("--dev", type=str, default="data/sst-dev.txt")
+    parser.add_argument("--test", type=str, default="data/sst-test.txt")
     parser.add_argument("--seed", type=int, default=11711)
     parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--option", type=str,
                         help='pretrain: the BERT parameters are frozen; finetune: BERT parameters are updated',
                         choices=('pretrain', 'finetune'), default="pretrain")
-    parser.add_argument("--use_gpu", action='store_true')
-    parser.add_argument("--dev_out", type=str, default="cfimdb-dev-output.txt")
-    parser.add_argument("--test_out", type=str, default="cfimdb-test-output.txt")
+    parser.add_argument("--use_gpu", action='store_true', default=True )
+    parser.add_argument("--dev_out", type=str, default="sst-dev-output.txt")
+    parser.add_argument("--test_out", type=str, default="sst-test-output.txt")
     parser.add_argument("--filepath", type=str, default=None)
 
     # hyper parameters
-    parser.add_argument("--batch_size", help='sst: 64, cfimdb: 8 can fit a 12GB GPU', type=int, default=8)
+    parser.add_argument("--batch_size", help='sst: 64, cfimdb: 8 can fit a 12GB GPU', type=int, default=64)
     parser.add_argument("--hidden_dropout_prob", type=float, default=0.3)
     parser.add_argument("--lr", type=float, help="learning rate, default lr for 'pretrain': 1e-3, 'finetune': 1e-5",
-                        default=1e-5)
+                        default=1e-3)
 
     args = parser.parse_args()
     print(f"args: {vars(args)}")

@@ -53,7 +53,7 @@ class BertSelfAttention(nn.Module):
 
     attn=attn/math.sqrt(query.shape[-1])
 
-    attn_prob = torch.softmax(attn, dim=-1)
+    attn_prob = F.softmax(attn, dim=-1)
 
     attn_prob = self.dropout(attn_prob)
 
